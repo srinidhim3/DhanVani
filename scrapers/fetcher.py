@@ -2,6 +2,8 @@ import requests
 import feedparser
 import logging
 from typing import List, Any, Optional
+import warnings
+warnings.filterwarnings("ignore")
 
 def fetch_articles(source: dict) -> Optional[List[Any]]:
     """Fetch articles from the RSS feed."""

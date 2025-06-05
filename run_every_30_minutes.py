@@ -1,6 +1,8 @@
 import schedule
 import time
 import subprocess
+import warnings
+warnings.filterwarnings("ignore")
 
 def run_scraper():
     print("Running scraper")

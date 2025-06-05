@@ -92,7 +92,6 @@ SOURCES = [
         "name": "Investing.com",
         "urls": [
             "https://www.investing.com/rss/121899.rss",
-            "https://www.investing.com/rss/159.rss",
             "https://www.investing.com/rss/market_overview.rss",
             "https://www.investing.com/rss/market_overview_Technical.rss",
             "https://www.investing.com/rss/market_overview_Fundamental.rss",
@@ -143,7 +142,6 @@ SOURCES = [
             "https://www.investing.com/rss/news_356.rss",
             "https://www.investing.com/rss/news_357.rss",
             "https://www.investing.com/rss/news_1.rss",
-            "https://www.investing.com/rss/news_462.rss",
             "https://www.investing.com/rss/news_11.rss",
             "https://www.investing.com/rss/news_25.rss",
             "https://www.investing.com/rss/news_95.rss",
