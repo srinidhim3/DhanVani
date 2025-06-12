@@ -40,7 +40,7 @@ def get_articles(
     sentiment_label: Optional[str] = Query(None),
     source: Optional[str] = Query(None),
     published: Optional[str] = Query(None, description="Format: YYYY-MM-DD"),
-    limit: int = Query(10000, ge=1, le=100),
+    limit: int = Query(10000, ge=1, le=10000),
     offset: int = Query(0, ge=0),
 ):
     try:

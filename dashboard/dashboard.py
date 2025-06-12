@@ -7,11 +7,21 @@ import plotly.express as px
 from wordcloud import WordCloud
 import base64
 from io import BytesIO
-
+import sqlite3
+pd.set_option('display.max_columns', None)
 # Initialize Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 API_URL = "http://localhost:8000/articles"
+
+def get_sources():
+    conn = sqlite3.connect('data/db.sqlite')
+    df = pd.read_sql_query("SELECT DISTINCT source FROM raw_articles", conn)
+    conn.close()
+    return df["source"].dropna().tolist()
+
+source_options = [{"label": source, "value": source} for source in get_sources()]
+source_options.append({"label": "All", "value": ""})
 
 def fetch_data(sentiment=None, source=None, published=None):
     params = {}
@@ -57,11 +67,7 @@ app.layout = dbc.Container([
                     html.Label("Source"),
                     dcc.Dropdown(
                         id="source-filter",
-                        options=[
-                            {"label": "All", "value": ""},
-                            {"label": "Economic Times", "value": "Economic Times"},
-                            {"label": "Moneycontrol", "value": "Moneycontrol"},
-                        ],
+                        options=source_options,
                         value="",
                         placeholder="Select Source",
                         clearable=False,
@@ -142,7 +148,7 @@ def update_charts(sentiment, source, date):
     if df.empty:
         pie = px.pie(title="No Data Available")
         bar = px.bar(title="No Data Available")
-        return pie, bar, []
+        return pie, bar, [], None
 
     # Pie Chart: Sentiment Distribution
     all_sentiments = ["positive", "neutral", "negative"]
@@ -164,14 +170,26 @@ def update_charts(sentiment, source, date):
     )
 
     # Bar Chart: Articles per Day
-    df["published"] = pd.to_datetime(df["published"], errors="coerce")
-    articles_per_day = df.groupby(df["published"].dt.date).size().reset_index(name="count")
-    bar = px.bar(
-        articles_per_day,
-        x="published",
-        y="count",
-        title="Number of Articles per Day"
-    )
+    # df["published"] = pd.to_datetime(df["published"], errors="coerce")
+    # articles_per_day = df.groupby(df["published"].dt.date).size().reset_index(name="count")
+    print(df)
+    df["published"] = pd.to_datetime(df["published"].astype(str), errors="coerce")
+    df_valid = df.dropna(subset=["published"])
+
+    if not df_valid.empty and pd.api.types.is_datetime64_any_dtype(df_valid["published"]):
+        articles_per_day = (
+            df_valid.groupby(df_valid["published"].dt.date)
+            .size()
+            .reset_index(name="count")
+        )
+        bar = px.bar(
+            articles_per_day,
+            x="published",
+            y="count",
+            title="Number of Articles per Day"
+        )
+    else:
+        bar = px.bar(title="No Data Available")
 
     # Word Cloud
     text = " ".join(df["title"].dropna().tolist())
