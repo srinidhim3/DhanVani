@@ -1,3 +1,4 @@
+import os
 import dash
 from dash import dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
@@ -12,7 +13,7 @@ pd.set_option('display.max_columns', None)
 # Initialize Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-API_URL = "http://localhost:8000/articles"
+API_URL = "https://dhanvani-api.onrender.com/articles"
 
 def get_sources():
     conn = sqlite3.connect('data/db.sqlite')
@@ -210,4 +211,5 @@ def update_charts(sentiment, source, date):
     return pie, bar, df.to_dict("records"), wordcloud_src
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 8050))
+    app.run_server(host="0.0.0.0", port=port, debug=True)
