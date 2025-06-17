@@ -8,24 +8,33 @@ import plotly.express as px
 from wordcloud import WordCloud
 import base64
 from io import BytesIO
-import sqlite3
+# import sqlite3 # No longer needed for direct DB access
 pd.set_option('display.max_columns', None)
 # Initialize Dash app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-API_URL = "https://dhanvani-api.onrender.com/articles"
+# Use environment variables for API base URL or default to local
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000") # Assuming API runs on port 8000 locally
+ARTICLES_API_URL = f"{API_BASE_URL}/articles"
+SOURCES_API_URL = f"{API_BASE_URL}/sources"
 
-def get_sources():
-    conn = sqlite3.connect('data/db.sqlite')
-    df = pd.read_sql_query("SELECT DISTINCT source FROM raw_articles", conn)
-    conn.close()
-    return df["source"].dropna().tolist()
+def get_sources_from_api():
+    try:
+        response = requests.get(SOURCES_API_URL, timeout=10)
+        response.raise_for_status()
+        sources = response.json()
+        return [s for s in sources if s] # Filter out empty or None sources
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching sources from API: {e}")
+        return []
 
-source_options = [{"label": source, "value": source} for source in get_sources()]
+source_list = get_sources_from_api()
+source_options = [{"label": source, "value": source} for source in source_list]
 source_options.append({"label": "All", "value": ""})
 
 def fetch_data(sentiment=None, source=None, published=None):
-    params = {}
+    # Default limit for fetching data, can be adjusted or made configurable
+    params = {"limit": 10000, "offset": 0}
     if sentiment:
         params["sentiment_label"] = sentiment
     if source:
@@ -34,7 +43,7 @@ def fetch_data(sentiment=None, source=None, published=None):
         params["published"] = published
 
     try:
-        response = requests.get(API_URL, params=params, timeout=10)
+        response = requests.get(ARTICLES_API_URL, params=params, timeout=10)
         response.raise_for_status()
         return pd.DataFrame(response.json())
     except Exception as e:

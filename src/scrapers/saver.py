@@ -1,17 +1,18 @@
-import sqlite3
+# import sqlite3 # No longer using SQLite
+import psycopg2
 import logging
 from datetime import datetime, timezone
 from typing import List, Any, Optional
-from scrapers.config import DB_PATH
+from ..database import get_db_connection # Use the centralized connection getter
 
 def save_articles(articles: List[Any], source_name: str) -> None:
-    """Save articles to the SQLite database."""
+    """Save articles to the PostgreSQL database."""
     if not articles:
         logging.warning("No articles to save.")
         return
-    conn: Optional[sqlite3.Connection] = None
+    conn: Optional[psycopg2.extensions.connection] = None
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db_connection()
         cursor = conn.cursor()
         count_inserted = 0
 
