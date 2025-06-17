@@ -1,13 +1,13 @@
 import logging
-from scrapers.config import init_config
-from scrapers.db import init_db
-from scrapers.fetcher import fetch_articles
-from scrapers.saver import save_articles
-from scrapers.sources import SOURCES
+from src.config import init_app_config # Updated import
+from src.database import init_db      # Updated import
+from .fetcher import fetch_articles   # Relative import within the package
+from .saver import save_articles      # Relative import
+from .sources import SOURCES          # Relative import
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
-    init_config()
+    init_app_config() # Call the centralized config initialization
     init_db()
 
     for source in SOURCES:

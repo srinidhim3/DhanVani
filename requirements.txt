@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 pandas
-sqlalchemy
 requests
 feedparser
 nltk
@@ -9,3 +8,4 @@ dash
 plotly
 dash-bootstrap-components
 wordcloud
+psycopg2-binary
