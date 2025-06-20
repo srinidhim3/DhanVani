@@ -27,9 +27,10 @@ def save_articles(articles: List[Any], source_name: str) -> None:
                     continue
 
                 cursor.execute("""
-                    INSERT OR IGNORE INTO raw_articles
+                    INSERT INTO stage.raw_articles
                     (title, link, published, summary, source, type, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (link) DO NOTHING
                 """, (
                     title,
                     link,
@@ -42,6 +43,7 @@ def save_articles(articles: List[Any], source_name: str) -> None:
                 count_inserted += cursor.rowcount
             except Exception as e:
                 logging.error(f"Error inserting article: {e}")
+                conn.rollback()
 
         conn.commit()
         logging.info(f"Saved {count_inserted} new articles.")

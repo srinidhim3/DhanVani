@@ -28,7 +28,7 @@ def init_db() -> None:
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS raw_articles (
+            CREATE TABLE IF NOT EXISTS stage.raw_articles (
                 id SERIAL PRIMARY KEY,
                 title TEXT,
                 link TEXT UNIQUE,
@@ -42,7 +42,7 @@ def init_db() -> None:
             )
         """)
         conn.commit()
-        logging.info("Database table 'raw_articles' checked/initialized successfully.")
+        logging.info("Database table 'stage.raw_articles' checked/initialized successfully.")
     except psycopg2.Error as e:
         logging.error(f"Error initializing database: {e}")
     except AttributeError: # If conn is None

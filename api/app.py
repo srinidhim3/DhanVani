@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, Query, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi import BackgroundTasks
 from typing import Optional, List
 from pydantic import BaseModel
 from src.database import get_db_connection, init_db  # Ensure init_db is called appropriately (e.g., on startup)
@@ -73,7 +74,7 @@ def get_articles(
 
         # Use DictCursor for dictionary-like row access
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        query = "SELECT id, title, link, published, source, sentiment_label FROM raw_articles WHERE 1=1" # Explicitly list columns
+        query = "SELECT id, title, link, published, source, sentiment_label FROM stage.raw_articles WHERE 1=1" # Explicitly list columns
         params = []
 
         if sentiment_label == "": sentiment_label = None
@@ -133,7 +134,7 @@ def get_sentiment_summary():
         cursor.execute(
             """
             SELECT sentiment_label, COUNT(*) as count
-            FROM raw_articles
+            FROM stage.raw_articles
             GROUP BY sentiment_label
             """
         )
@@ -158,7 +159,7 @@ def get_all_sources():
             raise HTTPException(status_code=503, detail="Database service unavailable")
 
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cursor.execute("SELECT DISTINCT source FROM raw_articles WHERE source IS NOT NULL AND source != '' ORDER BY source")
+        cursor.execute("SELECT DISTINCT source FROM stage.raw_articles WHERE source IS NOT NULL AND source != '' ORDER BY source")
         sources = [row["source"] for row in cursor.fetchall()]
         # DISTINCT and ORDER BY in SQL should handle deduplication and sorting
         return sources
@@ -174,20 +175,20 @@ def get_all_sources():
 
 # --- New Scraper Trigger Endpoint ---
 @app.post("/trigger-scraper", response_model=ScraperStatus)
-async def trigger_scraper_endpoint(x_scraper_secret: Optional[str] = Header(None)):
+async def trigger_scraper_endpoint(
+    background_tasks: BackgroundTasks,
+    x_scraper_secret: Optional[str] = Header(None)
+):
     if not SCRAPER_API_SECRET:
         logging.error("SCRAPER_API_SECRET is not configured on the server.")
         raise HTTPException(status_code=500, detail="Scraper trigger is not configured.")
-
     if x_scraper_secret != SCRAPER_API_SECRET:
         logging.warning("Unauthorized attempt to trigger scraper.")
         raise HTTPException(status_code=403, detail="Invalid or missing secret.")
-
     try:
         logging.info("Scraper task triggered via API.")
-        # Running synchronously. For long tasks, consider background tasks.
-        perform_scraping_and_analysis()
-        return ScraperStatus(status="success", message="Scraping and analysis task initiated.")
+        background_tasks.add_task(perform_scraping_and_analysis)
+        return ScraperStatus(status="success", message="Scraping and analysis task started in background.")
     except Exception as e:
         logging.error(f"Error during API-triggered scraper task: {e}")
         raise HTTPException(status_code=500, detail=f"Scraper task failed: {str(e)}")

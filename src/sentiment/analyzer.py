@@ -33,7 +33,7 @@ def run_sentiment_analysis():
 
     # Fetch articles that haven't been analyzed or need re-analysis
     # For simplicity, fetching all. Could be optimized to fetch only where sentiment_label IS NULL.
-    cursor.execute("SELECT id, title, summary FROM raw_articles WHERE sentiment_label IS NULL") # More efficient
+    cursor.execute("SELECT id, title, summary FROM stage.raw_articles WHERE sentiment_label IS NULL") # More efficient
     articles = cursor.fetchall()
     logging.info(f"Fetched {len(articles)} articles for sentiment analysis.")
 
@@ -59,8 +59,8 @@ def run_sentiment_analysis():
 
         # Update the article with sentiment score and label
         cursor.execute("""
-            UPDATE raw_articles
-            SET sentiment_score = ?, sentiment_label = ?
+            UPDATE stage.raw_articles
+            SET sentiment_score = %s, sentiment_label = %s
             WHERE id = %s
         """, (compound_score, sentiment_label, article_id)) # Using %s
         updated_count += cursor.rowcount
